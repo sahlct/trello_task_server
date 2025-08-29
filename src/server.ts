@@ -17,11 +17,26 @@ app.use(express.json());
 app.use(cookieParser());
 
 
+const allowedOrigins = [
+  "https://trello-task-client-e6o1.vercel.app",
+  "http://localhost:5173" 
+];
 
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "https://trello-task-client-e6o1.vercel.app";
-app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, origin);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.get("/", (_req, res) => res.json({ ok: true }));
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/boards", boardRoutes);
@@ -29,21 +44,22 @@ app.use("/api/columns", columnRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/users", userRoutes);
 
-// HTTP & Socket.IO
+
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: CLIENT_ORIGIN, credentials: true }
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
 });
 
 io.use(authSocket);
 
 io.on("connection", (socket) => {
-  // join a board room
   socket.on("joinBoard", (boardId: string) => {
     socket.join(boardId);
   });
 
-  // broadcast task create/update/move
   socket.on("taskCreated", (payload) => {
     io.to(payload.boardId).emit("taskCreated", payload);
   });
