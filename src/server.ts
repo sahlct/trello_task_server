@@ -18,7 +18,7 @@ app.use(cookieParser());
 
 
 
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "https://trello-task-client-e6o1.vercel.app";
 app.use(cors({ origin: CLIENT_ORIGIN, credentials: true }));
 
 app.get("/", (_req, res) => res.json({ ok: true }));
